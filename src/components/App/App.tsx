@@ -1,12 +1,12 @@
 
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData, useQuery} from '@tanstack/react-query'
 import { useDebounce} from 'use-debounce'
 import { useEffect, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 
 import SearchBox from '../SearchBox/SearchBox'
 import css from './App.module.css'
-import { createNote, deleteNote, fetchNotes } from '../../services/noteService'
+import {fetchNotes } from '../../services/noteService'
 import NoteList from '../NoteList/NoteList'
 import Modal from '../Modal/Modal'
 import NoteForm from '../NoteForm/NoteForm'
@@ -15,7 +15,6 @@ import Loader from '../Loader/Loader'
 import ErrorMessage from '../ErrorMessage/ErrorMessage'
 
 function App() {
-  const queryClient = useQueryClient();
   const [currentPage, setCurrentPage] = useState(1);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,40 +32,8 @@ function App() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const userSearch = e.target.value.trim();
-    if (!userSearch) {
-      return;
-    }
     setSearch(userSearch);
-  }
-
-  const creteNoteMutation = useMutation({
-    mutationFn: createNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      handleModalClose();
-      toast.success('Note created successfully');
-    }
-  });
-
-  const deleteNoteMutation = useMutation({
-    mutationFn: deleteNote,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      toast.success('Note deleted successfully');
-    }
-  });
-  
-
-  const handleFormSubmit = (values: {
-      title: string;
-      content: string;
-      tag: string;
-    }) => {
-    creteNoteMutation.mutate(values)
-  }
-
-  const handleNoteDelete = (id: string) => {
-    deleteNoteMutation.mutate(id);
+    setCurrentPage(1);
   }
   
   const notesArray = data?.notes || [];
@@ -96,12 +63,12 @@ function App() {
         {isSuccess&& totalPages > 1 && <Pagination totalPages={totalPages} currentPage={currentPage} onPageChange={handlePageChange}/>}
         <button className={css.button} onClick={() => setIsModalOpen(true)}>Create note +</button>
         {isModalOpen && <Modal onClose={handleModalClose}>
-          <NoteForm onClose={handleModalClose} onSubmitValues={handleFormSubmit}/>
+          <NoteForm onClose={handleModalClose}/>
         </Modal>}
       </header>
       {isLoading && <Loader />}
       {isError && <ErrorMessage/>}
-      {data && notesArray.length !== 0 && <NoteList notes={notesArray} onDelete={handleNoteDelete} />}
+      {data && notesArray.length !== 0 && <NoteList notes={notesArray}/>}
       <Toaster/>
     </div>
 
